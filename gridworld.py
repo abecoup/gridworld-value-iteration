@@ -14,7 +14,7 @@
 
 # --- Assumptions/notes ---
 # Reward structure:
-# -0.1 as default
+# 0 as default
 # +10 for goal state
 # -10 for water state
 # -1 for hitting obstacle/attempt to leave grid
@@ -26,6 +26,7 @@ import pygame
 import sys
 import numpy as np
 import random
+import math
 
 # globals
 GRID_ROWS = 5
@@ -37,30 +38,18 @@ WATER_STATE = (4,2)
 DRAW_STATES = {}
 ALL_STATES = [(i,j) for i in range(GRID_COLS) for j in range(GRID_ROWS)]
 
-ACTION_PROBABILITIES = {
-    'up': 0.8,
-    'right': 0.8,
-    'down': 0.8,
-    'left': 0.8,
-}
-CONFUSION_PROBABILITIES = {
-    'right': 0.05,
-    'left': 0.05,
-}
-BREAK_PROBABILITY = 0.1
-
 DISCOUNT_FACTOR = 0.9
 MAX_EPISODES = 10000
 EPISODE_SPEED = 0 # milliseconds, must be integer
 
 # pygame setup
-WINDOW_WIDTH = 500
-WINDOW_HEIGHT = 500
-BLOCK_SIZE = 100
-WINDOW = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-WINDOW.fill((0,0,0))
-pygame.display.set_caption("Gridworld")
-ROBOT = pygame.image.load("robot.png").convert_alpha()
+# WINDOW_WIDTH = 500
+# WINDOW_HEIGHT = 500
+# BLOCK_SIZE = 100
+# WINDOW = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+# WINDOW.fill((0,0,0))
+# pygame.display.set_caption("Gridworld")
+# ROBOT = pygame.image.load("robot.png").convert_alpha()
 
 
 # ---- PYGAME FUNCTIONS ----
@@ -127,17 +116,16 @@ def isValidState(stateCord):
         if (stateCord[1] >= 0) and (stateCord[1] <= (GRID_COLS-1)):
             if stateCord not in OBSTACLES:
                 return True
-    return False
+    return False # obstacle or outside grid
 
 
 def getActionSpace():
-    actionSpace = ["up","down","left","right"]
+    actionSpace = ["up","left","right","down"]
     return actionSpace
 
 
 def initActions():
     # state : list of possible actions from state
-    actions = {}
 
     actions = {}
     for state in ALL_STATES:
@@ -165,7 +153,7 @@ def initRewardFunction():
     goalReward = 10
     waterReward = -10
     obstacleReward = -1
-    defaultReward = -0.1
+    defaultReward = 0
     rewards = {}
 
     for state in ALL_STATES:
@@ -181,15 +169,10 @@ def initRewardFunction():
     return rewards
 
 
-def initValueFunction():
-    # initially value function is same as reward function
-    return initRewardFunction()
-
-
 # move agent up, down, left, or right given current state cord
 # returns next state cord, and reward from the action taken
 def makeAction(currStateCord, action):
-    reward = -0.1 # default
+    reward = 0 # default
 
     if action == "up":
         nextStateCord = (currStateCord[0]-1, currStateCord[1])
@@ -222,24 +205,26 @@ def makeAction(currStateCord, action):
 # Question 1 - Part 1 (Have the agent uniformly randomly select actions. Run 10,000 episodes.)
 def uniformRandomSelection():
     discountedReturns = []
-    font = pygame.font.SysFont("Arial", 20)
+    # font = pygame.font.SysFont("Arial", 20)
 
+    # 100 eps. for submission
     for episode in range(MAX_EPISODES):
         currState = START_STATE
         discountedReturn = 0
+        timestep = 0
 
         while currState != GOAL_STATE:
             # allow exit from pygame window
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
+            # for event in pygame.event.get():
+            #     if event.type == pygame.QUIT:
+            #         pygame.quit()
+            #         sys.exit()
             
             # for display
-            drawGrid()
-            drawObstacles(OBSTACLES)
-            drawGoal(GOAL_STATE)
-            displayIteration(episode, font)
+            # drawGrid()
+            # drawObstacles(OBSTACLES)
+            # drawGoal(GOAL_STATE)
+            # displayIteration(episode, font)
             
             # np.random uniformly distributes probablity between choices
             action = np.random.choice(getActionSpace())
@@ -248,12 +233,13 @@ def uniformRandomSelection():
             nextState, reward = makeAction(currState, action)
 
             # draw agent at next state, update display
-            drawAgent(nextState)
-            pygame.display.update()
-            pygame.time.wait(EPISODE_SPEED)
+            # drawAgent(nextState)
+            # pygame.display.update()
+            # pygame.time.wait(EPISODE_SPEED)
 
             # calculate discounted return
-            discountedReturn = reward + (DISCOUNT_FACTOR * discountedReturn)
+            discountedReturn += reward * (DISCOUNT_FACTOR ** timestep)
+            timestep += 1
 
             # update current state to next state
             currState = nextState
@@ -268,26 +254,11 @@ def uniformRandomSelection():
     return discountedReturns
 
 
-
-def valueIteration():
-    R = initRewardFunction() # state : reward
-    V = initValueFunction() # state : expected future discounted reward from state
-    actions = initActions() # state : list of possible actions from state
-    
-    # Transition probabilities
-    p_move = 0.8 
-    p_right = 0.05
-    p_left = 0.05
-    p_stay = 0.1
-
-
-
 def main():
-    pygame.init()
-    print(initRewardFunction())
-
+    # pygame.init()
+    
     returns = uniformRandomSelection()
-
+    
     mean_return = np.mean(returns)
     std_return = np.std(returns)
     max_return = np.max(returns)
