@@ -52,6 +52,7 @@ WINDOW.fill((0,0,0))
 pygame.display.set_caption("Gridworld")
 ROBOT = pygame.image.load("robot.png").convert_alpha()
 DRAW_STATES = {}
+EPISODE_SPEED = 100 # milliseconds, must be integer
 
 
 # ---- PYGAME FUNCTIONS ----
@@ -289,7 +290,7 @@ def runOptimalPolicy(policy):
 
             drawAgent(nextState)
             pygame.display.update()
-            pygame.time.wait(200)
+            pygame.time.wait(EPISODE_SPEED)
 
             # calculate discounted return
             discountedReturn += reward * (DISCOUNT_FACTOR ** timestep)
