@@ -137,8 +137,6 @@ def uniformRandomSelection():
 
 
 def main():
-    pygame.init()
-    
     returns = uniformRandomSelection()
     
     mean_return = np.mean(returns)
@@ -150,7 +148,6 @@ def main():
     print(f"Standard deviation of discounted returns: {std_return:.2f}")
     print(f"Maximum discounted return: {max_return:.2f}")
     print(f"Minimum discounted return: {min_return:.2f}")
-
 
 
 if __name__ == '__main__':

@@ -204,7 +204,7 @@ def runOptimalPolicy(policy):
 
         while currState != GOAL_STATE:
 
-            # np.random uniformly distributes probablity between choices
+            # choose optimal action from policy
             action = policy[currState]
 
             # get next state and the reward for the action
@@ -217,8 +217,8 @@ def runOptimalPolicy(policy):
             # update current state to next state
             currState = nextState
 
-            # if agent gets stuck in water, go to next episode
-            if currState in OBSTACLES + TERMINAL_STATES:
+            # if agent in water, go to next episode
+            if currState == WATER_STATE:
                 break
 
         # add the episodes final discounted return
