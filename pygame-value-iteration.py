@@ -281,17 +281,15 @@ def runOptimalPolicy(policy):
             drawGoal(GOAL_STATE)
             displayIteration(episode, font)
 
-
             # choose optimal action from policy
             action = policy[currState]
 
             # get next state and the reward for the action
             nextState, reward = takeAction(currState, action)
 
-            # draw agent at next state, update display
             drawAgent(nextState)
             pygame.display.update()
-            pygame.time.wait(100)
+            pygame.time.wait(200)
 
             # calculate discounted return
             discountedReturn += reward * (DISCOUNT_FACTOR ** timestep)

@@ -79,7 +79,7 @@ def takeAction(state, action):
         nextState = (state[0], state[1]-1)
     elif action == "R":
         nextState = (state[0], state[1]+1)
-    elif action == "N": # stay still
+    elif action == "stay": # stay still
         nextState = (state)
 
     if not inBounds(nextState) or nextState in OBSTACLES:
@@ -114,7 +114,7 @@ def calculateValue(V, state, action):
     newStateIntended, reward = takeAction(state, action)
     newStateVeerLeft, reward = takeAction(state, goLeft(action))
     newStateVeerRight, reward = takeAction(state, goRight(action))
-    stayState, reward = takeAction(state, "N")
+    stayState, reward = takeAction(state, "stay")
 
     v = reward
     v += 0.8 * (DISCOUNT_FACTOR * V[newStateIntended]) # take intended action
@@ -127,29 +127,42 @@ def calculateValue(V, state, action):
 
 def valueIteration():
     V = rewardFunction() # initialize V to reward function
-    policy = {}
+    policy = {} # initialize empty policy
 
     iteration = 0
     converged = False
 
+    # Keep iterating until the value function converges
     while not converged:
         delta = 0
         newV = rewardFunction()
 
         for state in STATES:
             if state not in TERMINAL_STATES + OBSTACLES:
+                
+                # computing v for each action
                 actionValues = [calculateValue(V, state, action) for action in ACTIONS]
+
+                # update value function with max v
                 newV[state] = round(max(actionValues), 4)
+
+                # use index of max v to get corresponding action 
                 bestAction = ACTIONS[np.argmax(actionValues)]
+
+                # update policy with best action
                 policy[state] = bestAction
+
+                # update difference between old V and new V for convergence check
                 delta = max(delta, abs(newV[state] - V[state]))
 
+        # update value function
         V = newV
         
         print(f"VI iteration {iteration}:")
         visualizeV(V)
         print()
 
+        # check for convergence
         if delta < THRESHOLD:
             converged = True
             print(f"Converged after {iteration} iterations.")
@@ -176,7 +189,7 @@ def visualizeV(V):
 def visualizePolicy(policy):
     bestActions = list(policy.values())
 
-    # insert - for obstacles/terminal states
+    # inserts for obstacles/terminal states
     bestActions.insert(12, "O")
     bestActions.insert(17, "O")
     bestActions.insert(22, "W")
