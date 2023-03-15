@@ -38,6 +38,7 @@ ACTIONS = ['U', 'D', 'L', 'R'] # up, down, left, right, no action
 
 DISCOUNT_FACTOR = 0.9
 THRESHOLD = 0.0001
+MAX_EPISODES = 10000
 
 
 def inBounds(state):
@@ -124,9 +125,9 @@ def calculateValue(V, state, action):
     return v
 
 
-
 def valueIteration():
     V = rewardFunction() # initialize V to reward function
+    policy = {}
 
     iteration = 0
     converged = False
@@ -136,14 +137,17 @@ def valueIteration():
         newV = rewardFunction()
 
         for state in STATES:
-            if state not in TERMINAL_STATES:
-                newV[state] = round(max([calculateValue(V, state, action) for action in ACTIONS]), 4)
+            if state not in TERMINAL_STATES + OBSTACLES:
+                actionValues = [calculateValue(V, state, action) for action in ACTIONS]
+                newV[state] = round(max(actionValues), 4)
+                bestAction = ACTIONS[np.argmax(actionValues)]
+                policy[state] = bestAction
                 delta = max(delta, abs(newV[state] - V[state]))
 
         V = newV
         
         print(f"VI iteration {iteration}:")
-        visualize(V)
+        visualizeV(V)
         print()
 
         if delta < THRESHOLD:
@@ -153,11 +157,10 @@ def valueIteration():
 
         iteration += 1
 
-    return V
+    return V, policy
 
 
-
-def visualize(V):
+def visualizeV(V):
     i = 0
     row = []
     for v in V.values():
@@ -170,8 +173,83 @@ def visualize(V):
             i += 1
 
 
+def visualizePolicy(policy):
+    bestActions = list(policy.values())
+
+    # insert - for obstacles/terminal states
+    bestActions.insert(12, "O")
+    bestActions.insert(17, "O")
+    bestActions.insert(22, "W")
+    bestActions.insert(24, "G")
+
+    i = 0
+    row = []
+    for bestAction in bestActions:
+        row.append(bestAction)
+        if i == GRID_SIZE-1:
+            print(row)
+            row = []
+            i = 0
+        else:
+            i += 1
+
+
+def runOptimalPolicy(policy):
+    discountedReturns = []
+
+    for episode in range(MAX_EPISODES):
+        currState = START_STATE
+        discountedReturn = 0
+        timestep = 0
+
+        while currState != GOAL_STATE:
+
+            # np.random uniformly distributes probablity between choices
+            action = policy[currState]
+
+            # get next state and the reward for the action
+            nextState, reward = takeAction(currState, action)
+
+            # calculate discounted return
+            discountedReturn += reward * (DISCOUNT_FACTOR ** timestep)
+            timestep += 1
+
+            # update current state to next state
+            currState = nextState
+
+            # if agent gets stuck in water, go to next episode
+            if currState in OBSTACLES + TERMINAL_STATES:
+                break
+
+        # add the episodes final discounted return
+        discountedReturns.append(discountedReturn)
+
+    return discountedReturns
+
+
 def main():
-    V = valueIteration()
+    V, policy = valueIteration()
+
+    print()
+    print("Optimal Value Function")
+    visualizeV(V)
+
+    print()
+    print("Optimal Policy")   
+    visualizePolicy(policy)
+
+    returns = runOptimalPolicy(policy)
+
+    mean_return = np.mean(returns)
+    std_return = np.std(returns)
+    max_return = np.max(returns)
+    min_return = np.min(returns)
+
+    print()
+    print(f"Mean discounted return: {mean_return:.2f}")
+    print(f"Standard deviation of discounted returns: {std_return:.2f}")
+    print(f"Maximum discounted return: {max_return:.2f}")
+    print(f"Minimum discounted return: {min_return:.2f}")
 
 
 
