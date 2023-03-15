@@ -104,6 +104,8 @@ def makeAction(currStateCord, action):
 
 # Question 1 - Part 1 (Have the agent uniformly randomly select actions. Run 10,000 episodes.)
 def uniformRandomSelection():
+    print("Running uniform random selection...")
+    
     discountedReturns = []
 
     for episode in range(MAX_EPISODES):
