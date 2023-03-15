@@ -6,6 +6,13 @@ import numpy as np
 import random
 import math
 
+# Value iteration implementation for Gridworld with following environment dynamics:
+# 1. Probability of 0.8 the agent moves in a specified direction.
+# 2. Probability of 0.05 it gets confused and veers to the right (i.e. -90deg from where it attempted to move)
+# 3. Probability of 0.05 it gets confused and veers to the left (i.e. +90deg from where it attempted to move)
+# 4. Probability of 0.10 the agent temporarily breaks and does not move at all
+# 5. If dynamics would cause the agent to EXIT (leave grid boundary) or hit OBSTACLE then the agent does not move
+# 6. Start in STATE = (0,0) and the process ends when STATE = (4,4)
 
 # Grid structure:
 # (0,0) (0,1) (0,2) (0,3) (0,4)
@@ -123,7 +130,7 @@ def valueIteration():
 
     iteration = 0
     converged = False
-    
+
     while not converged:
         delta = 0
         newV = rewardFunction()

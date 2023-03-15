@@ -1,27 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-# Author: Abraham Couperus
-# SWEN-711: Homework 4 - Question 1
-
-# Gridworld Implementation with following environment dynamics:
-# 1. Probability of 0.8 the agent moves in a specified direction.
-# 2. Probability of 0.05 it gets confused and veers to the right (i.e. -90deg from where it attempted to move)
-# 3. Probability of 0.05 it gets confused and veers to the left (i.e. +90deg from where it attempted to move)
-# 4. Probability of 0.10 the agent temporarily breaks and does not move at all
-# 5. If dynamics would cause the agent to EXIT (leave grid boundary) or hit OBSTACLE then the agent does not move
-# 6. Start in STATE = (0,0) and the process ends when STATE = (4,4)
-
-# --- Assumptions/notes ---
-# Reward structure:
-# 0 as default
-# +10 for goal state
-# -10 for water state
-# -1 for hitting obstacle/attempt to leave grid
-
-# - robot png at https://www.pngegg.com/en/png-bydsg
-
-
 import pygame
 import sys
 import numpy as np
@@ -35,31 +11,25 @@ START_STATE = (0, 0)
 GOAL_STATE = (4, 4)
 OBSTACLES = [(2,2),(3,2)]
 WATER_STATE = (4,2)
-DRAW_STATES = {}
 ALL_STATES = [(i,j) for i in range(GRID_COLS) for j in range(GRID_ROWS)]
+DRAW_STATES = {}
 
 DISCOUNT_FACTOR = 0.9
-MAX_EPISODES = 10000
-EPISODE_SPEED = 0 # milliseconds, must be integer
+MAX_EPISODES = 10
+EPISODE_SPEED = 100 # milliseconds, must be integer
 
 # pygame setup
-# WINDOW_WIDTH = 500
-# WINDOW_HEIGHT = 500
-# BLOCK_SIZE = 100
-# WINDOW = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-# WINDOW.fill((0,0,0))
-# pygame.display.set_caption("Gridworld")
-# ROBOT = pygame.image.load("robot.png").convert_alpha()
+WINDOW_WIDTH = 500
+WINDOW_HEIGHT = 500
+BLOCK_SIZE = 100
+WINDOW = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+WINDOW.fill((0,0,0))
+pygame.display.set_caption("Gridworld")
+ROBOT = pygame.image.load("robot.png").convert_alpha()
 
 
 # ---- PYGAME FUNCTIONS ----
 
-# Grid structure:
-# (0,0) (0,1) (0,2) (0,3) (0,4)
-# (1,0) (1,1) (1,2) (1,3) (1,4)
-# (2,0) (2,1) (2,2) (2,3) (2,4)
-# (3,0) (3,1) (3,2) (3,3) (3,4)
-# (4,0) (4,1) (4,2) (4,3) (4,4)
 def drawGrid():
     margin = 1
     color = (255,255,255)
@@ -108,7 +78,6 @@ def displayIteration(i, font):
     WINDOW.blit(counter_text, (5, 5))
 
 
-
 # ---- GRIDWORLD FUNCTIONS ----
 
 def isValidState(stateCord):
@@ -122,31 +91,6 @@ def isValidState(stateCord):
 def getActionSpace():
     actionSpace = ["up","left","right","down"]
     return actionSpace
-
-
-def initActions():
-    # state : list of possible actions from state
-
-    actions = {}
-    for state in ALL_STATES:
-        if state in [WATER_STATE, GOAL_STATE]:
-            continue # skip water and goal states
-
-        next_states = []
-        i, j = state
-
-        if isValidState((i-1,j)):
-            next_states.append((i-1,j)) # up
-        if isValidState((i+1,j)):
-            next_states.append((i+1,j)) # down
-        if isValidState((i,j-1)):
-            next_states.append((i,j-1)) # left
-        if isValidState((i,j+1)):
-            next_states.append((i,j+1)) # right
-
-        actions[state] = next_states
-
-    return actions
         
 
 def initRewardFunction():
@@ -202,12 +146,10 @@ def makeAction(currStateCord, action):
         return currStateCord, reward
 
 
-# Question 1 - Part 1 (Have the agent uniformly randomly select actions. Run 10,000 episodes.)
-def uniformRandomSelection():
+def visualUniformRandomSelection():
     discountedReturns = []
-    # font = pygame.font.SysFont("Arial", 20)
+    font = pygame.font.SysFont("Arial", 20)
 
-    # 100 eps. for submission
     for episode in range(MAX_EPISODES):
         currState = START_STATE
         discountedReturn = 0
@@ -215,16 +157,16 @@ def uniformRandomSelection():
 
         while currState != GOAL_STATE:
             # allow exit from pygame window
-            # for event in pygame.event.get():
-            #     if event.type == pygame.QUIT:
-            #         pygame.quit()
-            #         sys.exit()
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
             
             # for display
-            # drawGrid()
-            # drawObstacles(OBSTACLES)
-            # drawGoal(GOAL_STATE)
-            # displayIteration(episode, font)
+            drawGrid()
+            drawObstacles(OBSTACLES)
+            drawGoal(GOAL_STATE)
+            displayIteration(episode, font)
             
             # np.random uniformly distributes probablity between choices
             action = np.random.choice(getActionSpace())
@@ -233,9 +175,9 @@ def uniformRandomSelection():
             nextState, reward = makeAction(currState, action)
 
             # draw agent at next state, update display
-            # drawAgent(nextState)
-            # pygame.display.update()
-            # pygame.time.wait(EPISODE_SPEED)
+            drawAgent(nextState)
+            pygame.display.update()
+            pygame.time.wait(EPISODE_SPEED)
 
             # calculate discounted return
             discountedReturn += reward * (DISCOUNT_FACTOR ** timestep)
@@ -255,9 +197,9 @@ def uniformRandomSelection():
 
 
 def main():
-    # pygame.init()
-    
-    returns = uniformRandomSelection()
+    pygame.init()
+
+    returns = visualUniformRandomSelection()
     
     mean_return = np.mean(returns)
     std_return = np.std(returns)
@@ -268,7 +210,6 @@ def main():
     print(f"Standard deviation of discounted returns: {std_return:.2f}")
     print(f"Maximum discounted return: {max_return:.2f}")
     print(f"Minimum discounted return: {min_return:.2f}")
-
 
 
 if __name__ == '__main__':
